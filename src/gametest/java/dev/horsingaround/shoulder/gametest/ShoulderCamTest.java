@@ -18,6 +18,7 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContex
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.worldselection.WorldCreationUiState;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
@@ -75,6 +76,10 @@ public final class ShoulderCamTest implements FabricClientGameTest {
 		screenshot(ctx, "01_on_foot");
 
 		// Walk while sweeping the view: the camera must look exactly where the player looks and keep a steady orbit.
+		// Frames are capped at 30 a second so they fall at varied points between ticks (uncapped, the frame before each
+		// sample lands near the end of a tick): the orbit must hold mid-tick too.
+		final int framerateLimit = ctx.computeOnClient(mc -> mc.options.framerateLimit().get());
+		ctx.runOnClient(mc -> mc.options.framerateLimit().set(30));
 		input.holdKey(o -> o.keyUp);
 		float worstAngle = 0.0F;
 		double nearest = Double.MAX_VALUE;
@@ -86,9 +91,10 @@ public final class ShoulderCamTest implements FabricClientGameTest {
 			ctx.waitTick();
 			final double[] frame = ctx.computeOnClient(mc -> {
 				final Camera camera = mc.gameRenderer.mainCamera();
+				final float partialTicks = framePartialTicks(mc);
 				return new double[] {
-					Math.abs(Mth.wrapDegrees(camera.yRot() - mc.player.getViewYRot(1.0F))) + Math.abs(camera.xRot() - mc.player.getViewXRot(1.0F)),
-					camera.position().distanceTo(mc.player.getEyePosition(1.0F))
+					Math.abs(Mth.wrapDegrees(camera.yRot() - mc.player.getViewYRot(partialTicks))) + Math.abs(camera.xRot() - mc.player.getViewXRot(partialTicks)),
+					camera.position().distanceTo(mc.player.getEyePosition(partialTicks))
 				};
 			});
 			worstAngle = Math.max(worstAngle, (float) frame[0]);
@@ -102,6 +108,7 @@ public final class ShoulderCamTest implements FabricClientGameTest {
 			}
 		}
 		input.releaseKey(o -> o.keyUp);
+		ctx.runOnClient(mc -> mc.options.framerateLimit().set(framerateLimit));
 		check("camera looks exactly where the player looks (deg off)", worstAngle, 0.0, 0.01);
 		check("orbit radius steady while walking and turning (blocks of variation)", farthest - nearest, 0.0, 0.05);
 		check("shoulder offset steady while walking and turning (blocks of variation)", sideHigh - sideLow, 0.0, 0.05);
@@ -184,11 +191,23 @@ public final class ShoulderCamTest implements FabricClientGameTest {
 	/** Camera position relative to the player's eyes along the player's right, blocks (negative = left). */
 	private static double cameraSideOffset(final ClientGameTestContext ctx) {
 		return ctx.computeOnClient(mc -> {
+			final float partialTicks = framePartialTicks(mc);
 			final Vec3 camera = mc.gameRenderer.mainCamera().position();
-			final Vec3 eye = mc.player.getEyePosition();
-			final float yaw = mc.player.getYRot() * Mth.DEG_TO_RAD;
+			final Vec3 eye = mc.player.getEyePosition(partialTicks);
+			final float yaw = mc.player.getViewYRot(partialTicks) * Mth.DEG_TO_RAD;
 			return (camera.x - eye.x) * -Mth.cos(yaw) + (camera.z - eye.z) * -Mth.sin(yaw);
 		});
+	}
+
+	/**
+	 * Partial tick the last rendered frame placed the camera at. Test code runs between frames, after the player has
+	 * moved for the latest tick, while the camera still shows the previous frame: that frame drew the player at a
+	 * partial tick set by real-time frame pacing, so comparing the camera with the player at partial tick 1.0 adds up
+	 * to one tick of movement (0.2 blocks walking) that varies from run to run. Compare with the player as that frame
+	 * drew them instead.
+	 */
+	private static float framePartialTicks(final Minecraft mc) {
+		return mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.cameraEntityPartialTicks;
 	}
 
 	private void screenshot(final ClientGameTestContext ctx, final String name) {
