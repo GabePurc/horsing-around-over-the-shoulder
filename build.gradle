@@ -37,6 +37,14 @@ fabricApi {
 	}
 }
 
+// Dev runtime: Horsing Around built in a sibling checkout (first folder in horsing_around_libs that has a jar).
+def horsingAroundJars = project.horsing_around_libs.split(',').collect { dir ->
+	fileTree(dir.trim()) {
+		include 'horsing-around-*.jar'
+		exclude '*-sources.jar', 'horsing-around-shoulder-*.jar'
+	}.files
+}.find { !it.isEmpty() } ?: []
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
@@ -50,10 +58,7 @@ dependencies {
 	localRuntime "maven.modrinth:modmenu:${project.modmenu_version}"
 	localRuntime "maven.modrinth:placeholder-api:${project.placeholder_api_version}"
 	gametestCompileOnly "maven.modrinth:modmenu:${project.modmenu_version}"
-	localRuntime fileTree(project.horsing_around_libs) {
-		include 'horsing-around-*.jar'
-		exclude '*-sources.jar', 'horsing-around-shoulder-*.jar'
-	}
+	localRuntime files(horsingAroundJars)
 }
 
 processResources {
