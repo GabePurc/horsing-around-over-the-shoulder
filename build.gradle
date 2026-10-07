@@ -1,0 +1,75 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+
+base {
+	archivesName = 'horsing-around-shoulder'
+}
+
+repositories {
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = 'Modrinth'
+				url = 'https://api.modrinth.com/maven'
+			}
+		}
+		filter {
+			includeGroup 'maven.modrinth'
+		}
+	}
+}
+
+// Compile-only copy of Horsing Around's camera API (dev.horsingaround.client.api.RideCameraApi), so this mod builds
+// on its own. It is never packaged: at runtime the real class comes from Horsing Around when that mod is installed,
+// and is only touched when it is (see HorsingAroundCompat).
+sourceSets {
+	horsingaroundApi
+}
+
+// Automated camera test: ./gradlew runClientGameTest (report and screenshots land in build/run/clientGameTest).
+fabricApi {
+	configureTests {
+		createSourceSet = true
+		modId = "horsingaround-shoulder-gametest"
+		enableGameTests = false
+		enableClientGameTests = true
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Optional integrations, compile only.
+	compileOnly "maven.modrinth:modmenu:${project.modmenu_version}"
+	compileOnly sourceSets.horsingaroundApi.output
+
+	// Dev runtime: Mod Menu to reach the settings screen, and Horsing Around (if built next door) for riding.
+	localRuntime "maven.modrinth:modmenu:${project.modmenu_version}"
+	localRuntime "maven.modrinth:placeholder-api:${project.placeholder_api_version}"
+	gametestCompileOnly "maven.modrinth:modmenu:${project.modmenu_version}"
+	localRuntime fileTree(project.horsing_around_libs) {
+		include 'horsing-around-*.jar'
+		exclude '*-sources.jar', 'horsing-around-shoulder-*.jar'
+	}
+}
+
+processResources {
+	def version = project.version
+	inputs.property "version", version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}

@@ -1,0 +1,16 @@
+{
+	"schemaVersion": 1,
+	"id": "horsingaround-shoulder-gametest",
+	"version": "1.0.0",
+	"name": "Over the Shoulder camera test",
+	"environment": "client",
+	"entrypoints": {
+		"fabric-client-gametest": [
+			"dev.horsingaround.shoulder.gametest.ShoulderCamTest"
+		]
+	},
+	"depends": {
+		"horsingaround_shoulder": "*",
+		"fabric-client-gametest-api-v1": "*"
+	}
+}
