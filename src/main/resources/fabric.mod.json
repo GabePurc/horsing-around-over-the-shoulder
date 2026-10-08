@@ -3,7 +3,7 @@
 	"id": "horsingaround_shoulder",
 	"version": "${version}",
 	"name": "Horsing Around: Over the Shoulder",
-	"description": "Red Dead style over-the-shoulder third-person camera. Works on its own; with Horsing Around it takes over the riding camera too.",
+	"description": "Over-the-shoulder third-person camera. Works on its own; with Horsing Around it takes over the riding camera too.",
 	"authors": [
 		"GabePurc"
 	],
