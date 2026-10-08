@@ -2,6 +2,8 @@ package dev.horsingaround.shoulder.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -20,7 +22,12 @@ public final class ShoulderConfig {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("horsingaround_shoulder.json");
 	private static ShoulderConfig instance = new ShoulderConfig();
+	/** Riding height before version 2 (it sat too high); a saved file still on it moves to the new default. */
+	private static final float OLD_RIDE_HEIGHT = 0.7F;
+	private static final int VERSION = 2;
 
+	/** Settings file version. */
+	public int version = VERSION;
 	public boolean enabled = true;
 	public boolean leftShoulder = false;
 
@@ -34,7 +41,7 @@ public final class ShoulderConfig {
 	// Riding (with Horsing Around): distance is a share of the horse camera's speed-based distance.
 	public float rideDistanceScale = 1.0F;
 	public float rideSide = 0.6F;
-	public float rideHeight = 0.7F;
+	public float rideHeight = 0.35F;
 	/** Share of the saddle bounce the riding camera takes. */
 	public float rideBounce = 0.12F;
 	/** How quickly framing changes (on foot / aiming / riding, shoulder swap), per second. */
@@ -47,16 +54,37 @@ public final class ShoulderConfig {
 	}
 
 	public static void load() {
-		if (Files.exists(FILE)) {
-			try (Reader reader = Files.newBufferedReader(FILE)) {
-				final ShoulderConfig loaded = GSON.fromJson(reader, ShoulderConfig.class);
-				if (loaded != null) {
-					instance = loaded;
-				}
-			} catch (final IOException | RuntimeException e) {
-				LOGGER.warn("Could not read {}, using defaults", FILE, e);
-			}
+		if (!Files.exists(FILE)) {
+			return;
 		}
+		int fileVersion = VERSION;
+		try (Reader reader = Files.newBufferedReader(FILE)) {
+			final JsonElement json = JsonParser.parseReader(reader);
+			final ShoulderConfig loaded = GSON.fromJson(json, ShoulderConfig.class);
+			if (loaded == null) {
+				return;
+			}
+			instance = loaded;
+			// Files from before version 2 have no version.
+			final JsonElement version = json.getAsJsonObject().get("version");
+			fileVersion = version == null ? 1 : version.getAsInt();
+		} catch (final IOException | RuntimeException e) {
+			LOGGER.warn("Could not read {}, using defaults", FILE, e);
+			return;
+		}
+		migrate(instance, fileVersion);
+	}
+
+	/** Older files keep the player's own choices; only values still at an old default move to the new one. */
+	private static void migrate(final ShoulderConfig c, final int fileVersion) {
+		if (fileVersion >= VERSION) {
+			return;
+		}
+		if (Math.abs(c.rideHeight - OLD_RIDE_HEIGHT) < 1.0E-4F) {
+			c.rideHeight = new ShoulderConfig().rideHeight;
+		}
+		c.version = VERSION;
+		save();
 	}
 
 	public static void save() {

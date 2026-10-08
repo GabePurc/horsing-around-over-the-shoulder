@@ -28,7 +28,7 @@
 	"options.horsingaround_shoulder.aim_side": "Shoulder offset",
 	"options.horsingaround_shoulder.aim_side.tooltip": "How far to the side of your head the camera sits while you aim.",
 	"options.horsingaround_shoulder.ride_distance": "Distance",
-	"options.horsingaround_shoulder.ride_distance.tooltip": "How far back the camera sits while riding, compared with Horsing Around's riding camera. It still pulls back as your horse speeds up.",
+	"options.horsingaround_shoulder.ride_distance.tooltip": "How far back the camera sits while riding, compared with Horsing Around's riding camera as designed (its own distance setting doesn't apply here). It still pulls back as your horse speeds up.",
 	"options.horsingaround_shoulder.ride_side": "Shoulder offset",
 	"options.horsingaround_shoulder.ride_side.tooltip": "How far to the side the camera sits while riding.",
 	"options.horsingaround_shoulder.ride_height": "Height",
