@@ -2,6 +2,8 @@ package dev.horsingaround.shoulder.mixin;
 
 import static dev.horsingaround.shoulder.ShoulderTuning.WALL_MARGIN;
 
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import dev.horsingaround.shoulder.HorsingAroundCompat;
 import dev.horsingaround.shoulder.ShoulderAim;
 import dev.horsingaround.shoulder.ShoulderCamera;
@@ -19,9 +21,6 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Places the third-person (back) camera over the shoulder. It looks exactly where the player looks and orbits the
@@ -54,12 +53,13 @@ public abstract class CameraMixin {
 	@Shadow
 	protected abstract void setPosition(double x, double y, double z);
 
-	@Inject(method = "alignWithEntity", at = @At("HEAD"), cancellable = true)
-	private void horsingaroundShoulder$place(final float partialTicks, final CallbackInfo ci) {
+	@WrapMethod(method = "alignWithEntity")
+	private void horsingaroundShoulder$place(final float partialTicks, final Operation<Void> original) {
 		final Entity e = this.entity;
 		final Level level = this.level;
 		if (level == null || !ShoulderCamera.isActive(this.minecraft, e)) {
 			ShoulderAim.clear();
+			original.call(partialTicks);
 			return;
 		}
 		final double eyeY = Mth.lerp(partialTicks, e.yo, e.getY()) + Mth.lerp(partialTicks, this.eyeHeightOld, this.eyeHeight);
@@ -84,7 +84,6 @@ public abstract class CameraMixin {
 		} else {
 			ShoulderAim.clear();
 		}
-		ci.cancel();
 	}
 
 	/** Fraction (0..1) of the offset the camera can travel before a wall, from a few jittered rays like vanilla. */

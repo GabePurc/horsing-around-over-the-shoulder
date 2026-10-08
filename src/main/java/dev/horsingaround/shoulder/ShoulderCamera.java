@@ -2,6 +2,7 @@ package dev.horsingaround.shoulder;
 
 import static dev.horsingaround.shoulder.ShoulderTuning.*;
 
+import dev.horsingaround.shoulder.compat.OtherCameras;
 import dev.horsingaround.shoulder.config.ShoulderConfig;
 
 import net.minecraft.client.CameraType;
@@ -34,7 +35,8 @@ public final class ShoulderCamera {
 	}
 
 	public static boolean isActive(final Minecraft minecraft, final Entity cameraEntity) {
-		return ShoulderConfig.get().enabled && cameraEntity instanceof LivingEntity && minecraft.options.getCameraType() == CameraType.THIRD_PERSON_BACK;
+		return ShoulderConfig.get().enabled && cameraEntity instanceof LivingEntity && minecraft.options.getCameraType() == CameraType.THIRD_PERSON_BACK
+			&& !OtherCameras.active();
 	}
 
 	/** Advances the framing for this frame. {@code eyeY} is the vanilla (crouch-smoothed) eye height. */

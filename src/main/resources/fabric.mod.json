@@ -4,7 +4,14 @@
 	"version": "${version}",
 	"name": "Horsing Around: Over the Shoulder",
 	"description": "Red Dead style over-the-shoulder third-person camera. Works on its own; with Horsing Around it takes over the riding camera too.",
-	"license": "All-Rights-Reserved",
+	"authors": [
+		"GabePurc"
+	],
+	"contact": {
+		"sources": "https://github.com/GabePurc/horsing-around-over-the-shoulder",
+		"issues": "https://github.com/GabePurc/horsing-around-over-the-shoulder/issues"
+	},
+	"license": "MIT",
 	"environment": "client",
 	"entrypoints": {
 		"client": [
@@ -27,5 +34,8 @@
 		"horsingaround": "*",
 		"modmenu": "*"
 	},
-	"icon": "assets/horsingaround_shoulder/icon.png"
+	"icon": "assets/horsingaround_shoulder/icon.png",
+	"conflicts": {
+		"shouldersurfing": "*"
+	}
 }
