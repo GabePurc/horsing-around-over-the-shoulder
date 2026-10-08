@@ -5,9 +5,8 @@
 [Buy me a coffee](https://buymeacoffee.com/blintzbug) ☕
 
 Vanilla third person parks the camera dead centre behind your head, so you spend half your time staring at the back of
-your own skull and the other half guessing where your arrows are going to land. I wanted that Red Dead Redemption 2
-feeling instead: the camera tucked just off your shoulder, the world wide open in front of you, and a crosshair you can
-actually trust.
+your own skull and the other half guessing where your arrows are going to land. I wanted something better: the camera
+tucked just off your shoulder, the world wide open in front of you, and a crosshair you can actually trust.
 
 So that's what this is.
 
