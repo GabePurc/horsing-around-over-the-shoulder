@@ -159,11 +159,31 @@ public final class ShoulderCamTest implements FabricClientGameTest {
 		ctx.waitTicks(5);
 		screenshot(ctx, "04_settings");
 		ctx.setScreen(() -> null);
+
+		// A settings file from before version 2 still on the old riding height (it sat too high) moves to the new
+		// default; one where the player chose their own keeps it.
+		check("old riding height moves to the new default (blocks)", loadOldFile(ctx, 0.7F), 0.34, 0.36);
+		check("a riding height the player chose is kept (blocks)", loadOldFile(ctx, 0.9F), 0.89, 0.91);
 		ctx.runOnClient(mc -> {
 			ShoulderConfig.reset();
+			ShoulderConfig.save();
 			ShoulderCamClient.setEnabled(true);
 		});
 		ctx.waitTicks(30);
+	}
+
+	/** Writes a version-1 settings file (no version) with this riding height, loads it, and returns the height it ends up at. */
+	private static double loadOldFile(final ClientGameTestContext ctx, final float rideHeight) {
+		return ctx.computeOnClient(mc -> {
+			final Path file = FabricLoader.getInstance().getConfigDir().resolve("horsingaround_shoulder.json");
+			try {
+				Files.writeString(file, String.format(Locale.ROOT, "{\"enabled\": true, \"rideHeight\": %.2f}", rideHeight));
+			} catch (final IOException e) {
+				throw new RuntimeException(e);
+			}
+			ShoulderConfig.load();
+			return (double) ShoulderConfig.get().rideHeight;
+		});
 	}
 
 	private void riding(final ClientGameTestContext ctx, final TestInput input, final TestServerContext server) {
@@ -182,6 +202,9 @@ public final class ShoulderCamTest implements FabricClientGameTest {
 		input.lookAt(180.0F, 10.0F);
 		ctx.waitTicks(30);
 		check("riding: camera sits off the right shoulder (blocks)", cameraSideOffset(ctx), 0.3, 1.0);
+		// The pivot rides 0.35 above the eyes; the camera backs off along the view (10 deg down, ~4 blocks).
+		check("riding: camera sits low behind the rider (above the eyes, blocks)", ctx.computeOnClient(mc ->
+			mc.gameRenderer.mainCamera().position().y - mc.player.getEyePosition(framePartialTicks(mc)).y), 0.8, 1.25);
 		screenshot(ctx, "05_riding");
 		input.holdKeyFor(o -> o.keyShift, 3);
 		ctx.waitTicks(10);
